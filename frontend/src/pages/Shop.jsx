@@ -16,21 +16,21 @@ const erc20Abi = [
 const initialProducts = [
   {
     id: 1,
-    name: "Sticker",
+    name: "贴纸",
     price: 100,
     stock: 120,
     image: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?auto=format&fit=crop&w=800&q=80"
   },
   {
     id: 2,
-    name: "T-Shirt",
+    name: "T恤",
     price: 500,
     stock: 36,
     image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80"
   },
   {
     id: 3,
-    name: "Tote Bag",
+    name: "帆布包",
     price: 800,
     stock: 48,
     image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=800&q=80"
@@ -54,12 +54,12 @@ function Shop() {
 
   const handleRedeem = async (product) => {
     if (!window.ethereum) {
-      message.error("MetaMask is not available in this browser.");
+      message.error("当前浏览器未安装 MetaMask");
       return;
     }
 
     if (product.stock <= 0) {
-      message.warning("This product is out of stock.");
+      message.warning("该商品已售罄");
       return;
     }
 
@@ -70,7 +70,7 @@ function Shop() {
       const accounts = await provider.send("eth_accounts", []);
 
       if (!accounts.length) {
-        message.warning("Please connect wallet first.");
+        message.warning("请先连接钱包");
         return;
       }
 
@@ -84,7 +84,7 @@ function Shop() {
         const balance = await tokenReader.balanceOf(account);
 
         if (balance < priceAmount) {
-          window.alert("Insufficient balance");
+          window.alert("余额不足");
           return;
         }
 
@@ -100,7 +100,7 @@ function Shop() {
         const mockBalance = ethers.parseUnits(storedMockBalance, mockDecimals);
 
         if (mockBalance < priceAmount) {
-          window.alert("Insufficient balance");
+          window.alert("余额不足");
           return;
         }
 
@@ -127,9 +127,9 @@ function Shop() {
         )
       );
 
-      message.success(`${product.name} redeemed successfully.`);
+      message.success(`${product.name} 兑换成功`);
     } catch (error) {
-      message.error(error?.shortMessage || error?.message || "Redeem failed.");
+      message.error(error?.shortMessage || error?.message || "兑换失败");
     } finally {
       setRedeemingId(null);
     }
@@ -138,7 +138,7 @@ function Shop() {
   return (
     <section className="page-section">
       <Space direction="vertical" size={18} className="full-width">
-        <Typography.Title level={2}>Shop</Typography.Title>
+        <Typography.Title level={2}>商城</Typography.Title>
         <Row gutter={[20, 20]}>
           {products.map((product) => (
             <Col xs={24} md={8} key={product.id}>
@@ -152,7 +152,7 @@ function Shop() {
                     disabled={product.stock <= 0}
                     onClick={() => handleRedeem(product)}
                   >
-                    Redeem
+                    兑换
                   </Button>
                 ]}
               >
@@ -160,7 +160,7 @@ function Shop() {
                   <Typography.Title level={4}>{product.name}</Typography.Title>
                   <Space wrap>
                     <Tag color="green">{product.price} PT</Tag>
-                    <Tag>{product.stock} in stock</Tag>
+                    <Tag>库存 {product.stock}</Tag>
                   </Space>
                 </Space>
               </Card>

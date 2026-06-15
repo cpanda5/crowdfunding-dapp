@@ -21,16 +21,16 @@ const readRecords = () => {
 };
 
 const columns = [
-  { title: "Product", dataIndex: "productName", key: "productName" },
+  { title: "商品", dataIndex: "productName", key: "productName" },
   {
-    title: "Price",
+    title: "价格",
     dataIndex: "price",
     key: "price",
     render: (price) => `${price} PT`
   },
-  { title: "Time", dataIndex: "time", key: "time" },
+  { title: "时间", dataIndex: "time", key: "time" },
   {
-    title: "Tx Hash",
+    title: "交易哈希",
     dataIndex: "txHash",
     key: "txHash",
     render: (txHash) => <Typography.Text copyable>{shortHash(txHash)}</Typography.Text>
@@ -81,7 +81,7 @@ function Profile() {
           setTokenBalance(`${mockBalance} PT (mock)`);
         }
       } catch (error) {
-        message.error(error?.shortMessage || error?.message || "Failed to load profile.");
+        message.error(error?.shortMessage || error?.message || "加载失败");
       } finally {
         setLoading(false);
       }
@@ -93,9 +93,9 @@ function Profile() {
   if (!loading && !account) {
     return (
       <section className="page-section">
-        <Typography.Title level={2}>Profile</Typography.Title>
+        <Typography.Title level={2}>个人中心</Typography.Title>
         <Card>
-          <Typography.Text>Please connect wallet</Typography.Text>
+          <Typography.Text>请先连接钱包</Typography.Text>
         </Card>
       </section>
     );
@@ -104,19 +104,19 @@ function Profile() {
   return (
     <section className="page-section">
       <Space direction="vertical" size={18} className="full-width">
-        <Typography.Title level={2}>Profile</Typography.Title>
+        <Typography.Title level={2}>个人中心</Typography.Title>
 
-        <Card title="Wallet Info" loading={loading}>
+        <Card title="钱包信息" loading={loading}>
           <Descriptions bordered column={1}>
-            <Descriptions.Item label="Wallet Address">{account}</Descriptions.Item>
-            <Descriptions.Item label="ETH Balance">{ethBalance}</Descriptions.Item>
-            <Descriptions.Item label="ProjectToken Balance">
+            <Descriptions.Item label="钱包地址">{account}</Descriptions.Item>
+            <Descriptions.Item label="ETH 余额">{ethBalance}</Descriptions.Item>
+            <Descriptions.Item label="代币余额">
               {tokenBalance}
             </Descriptions.Item>
           </Descriptions>
         </Card>
 
-        <Card title="Redemption History">
+        <Card title="兑换记录">
           {records.length ? (
             <Table
               rowKey={(record) => `${record.txHash}-${record.time}`}
@@ -126,7 +126,7 @@ function Profile() {
               scroll={{ x: 720 }}
             />
           ) : (
-            <Typography.Text>No redemption history</Typography.Text>
+            <Typography.Text>暂无兑换记录</Typography.Text>
           )}
         </Card>
       </Space>
