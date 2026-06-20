@@ -10,13 +10,21 @@ import * as Contracts from "./index.js";
 
 declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
-  getContractFactory(name: 'ProjectToken', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ProjectToken__factory>
+  getContractFactory(name: 'Crowdfunding', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.Crowdfunding__factory>
+getContractFactory(name: 'IProjectToken', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IProjectToken__factory>
+getContractFactory(name: 'ProjectToken', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ProjectToken__factory>
 
-  getContractAt(name: 'ProjectToken', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ProjectToken>
+  getContractAt(name: 'Crowdfunding', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.Crowdfunding>
+getContractAt(name: 'IProjectToken', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IProjectToken>
+getContractAt(name: 'ProjectToken', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ProjectToken>
 
-  deployContract(name: 'ProjectToken', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ProjectToken>
+  deployContract(name: 'Crowdfunding', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Crowdfunding>
+deployContract(name: 'IProjectToken', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IProjectToken>
+deployContract(name: 'ProjectToken', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ProjectToken>
 
-  deployContract(name: 'ProjectToken', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ProjectToken>
+  deployContract(name: 'Crowdfunding', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.Crowdfunding>
+deployContract(name: 'IProjectToken', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IProjectToken>
+deployContract(name: 'ProjectToken', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ProjectToken>
 
     // default types
     getContractFactory(
