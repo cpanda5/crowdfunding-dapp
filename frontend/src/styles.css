@@ -36,6 +36,16 @@ body {
   border-bottom: 0;
 }
 
+.nav-wallet {
+  flex: 0 0 auto;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .page-content {
   width: 100%;
   max-width: 1120px;

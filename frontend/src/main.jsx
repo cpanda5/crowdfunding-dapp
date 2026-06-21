@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ConfigProvider } from "antd";
 import App from "./App.jsx";
+import { Web3Provider } from "./context/Web3Context.jsx";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -18,7 +19,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           }
         }}
       >
-        <App />
+        <Web3Provider>
+          <App />
+        </Web3Provider>
       </ConfigProvider>
     </BrowserRouter>
   </React.StrictMode>
