@@ -38,6 +38,8 @@ function Crowdfunding() {
 
   const [progress, setProgress] = useState(null);
   const [myContribution, setMyContribution] = useState("0");
+  const [myClaimed, setMyClaimed] = useState(false);
+  const [contractOwner, setContractOwner] = useState("");
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState("");
@@ -65,9 +67,15 @@ function Crowdfunding() {
         coolingEnd: Number(coolingEnd),
         success
       });
+      const ownerAddr = await contract.owner();
+      setContractOwner(ownerAddr);
       if (account) {
-        const contrib = await contract.contributions(account);
+        const [contrib, claimedFlag] = await Promise.all([
+          contract.contributions(account),
+          contract.claimed(account)
+        ]);
         setMyContribution(ethers.formatEther(contrib));
+        setMyClaimed(claimedFlag);
       }
     } catch (error) {
       console.error(error);
@@ -112,8 +120,10 @@ function Crowdfunding() {
       loadChart();
     };
     contract.on("Invested", handler);
+    contract.on("Closed", handler);
     return () => {
       contract.off("Invested", handler);
+      contract.off("Closed", handler);
     };
   }, [getReadContract, loadProgress, loadChart]);
 
@@ -181,8 +191,16 @@ function Crowdfunding() {
     );
   }
 
+  const canClaim =
+    progress && ended && coolingOver && progress.success && Number(myContribution) > 0 && !myClaimed;
   const canRefund =
-    progress && ended && !progress.success && Number(myContribution) > 0;
+    progress &&
+    ended &&
+    Number(myContribution) > 0 &&
+    !myClaimed &&
+    (!progress.success || !coolingOver);
+  const isOwner =
+    account && contractOwner && account.toLowerCase() === contractOwner.toLowerCase();
 
   return (
     <section className="page-section">
@@ -198,9 +216,10 @@ function Crowdfunding() {
           <Col xs={24} md={14}>
             <Card title="项目信息">
               <Typography.Paragraph>
-                本项目旨在为校园开源硬件社区筹集启动资金。投资者投入 ETH 即按
-                <b> 1 ETH = {RATE} PT</b> 的比例获得项目代币（PT），代币可在项目商城兑换纪念商品。
-                前 3 名投资者享 <b>20% 早鸟奖励</b>；众筹失败时投资人可全额退款。
+                本项目旨在为校园开源硬件社区筹集启动资金。投资者投入 ETH 参与众筹，
+                <b>众筹成功后</b>可按 <b>1 ETH = {RATE} PT</b> 的比例领取项目代币（PT），
+                代币可在项目商城兑换纪念商品。前 3 名投资者享 <b>20% 早鸟奖励</b>；
+                众筹失败时投资人可全额退款。
               </Typography.Paragraph>
 
               <Space.Compact style={{ width: "100%" }}>
@@ -222,24 +241,48 @@ function Crowdfunding() {
               </Space.Compact>
               {amount && Number(amount) > 0 && (
                 <Typography.Text type="secondary">
-                  预计可得约 {(Number(amount) * RATE).toLocaleString()} PT（早鸟另加 20%）
+                  众筹成功后约可领取 {(Number(amount) * RATE).toLocaleString()} PT（早鸟另加 20%）
                 </Typography.Text>
+              )}
+
+              {isOwner && !ended && (
+                <div style={{ marginTop: 16 }}>
+                  <Button
+                    danger
+                    loading={busy === "close"}
+                    onClick={() => sendTx("close", (c) => c.closeEarly())}
+                  >
+                    提前结束众筹（发起人）
+                  </Button>
+                </div>
               )}
 
               {Number(myContribution) > 0 && (
                 <div style={{ marginTop: 16 }}>
                   <Typography.Text>
                     我已投资 <b>{myContribution} ETH</b>
+                    {myClaimed && "（已领取代币）"}
                   </Typography.Text>
-                  {canRefund && (
+                  {(canClaim || canRefund) && (
                     <Space style={{ marginTop: 10 }}>
-                      <Button
-                        danger
-                        loading={busy === "refund"}
-                        onClick={() => sendTx("refund", (c) => c.refund())}
-                      >
-                        退款
-                      </Button>
+                      {canClaim && (
+                        <Button
+                          type="primary"
+                          loading={busy === "claim"}
+                          onClick={() => sendTx("claim", (c) => c.claim())}
+                        >
+                          领取代币
+                        </Button>
+                      )}
+                      {canRefund && (
+                        <Button
+                          danger
+                          loading={busy === "refund"}
+                          onClick={() => sendTx("refund", (c) => c.refund())}
+                        >
+                          退款
+                        </Button>
+                      )}
                     </Space>
                   )}
                 </div>

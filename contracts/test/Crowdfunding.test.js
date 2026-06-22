@@ -40,7 +40,7 @@ describe("Crowdfunding", function () {
     expect(await token.owner()).to.equal(await crowdfunding.getAddress());
   });
 
-  it("投资后按比例即时铸造代币", async function () {
+  it("投资只记录贡献，不立即铸币", async function () {
     const { token, crowdfunding, carol } = await deployFixture();
 
     const [, , bob] = await ethers.getSigners();
@@ -50,20 +50,53 @@ describe("Crowdfunding", function () {
 
     expect(await crowdfunding.contributions(carol.address)).to.equal(ethers.parseEther("2"));
     expect(await crowdfunding.investorsCount()).to.equal(2n);
+    expect(await token.balanceOf(carol.address)).to.equal(0);
   });
 
-  it("前 N 名投资人享受 20% 早鸟奖励，其后恢复普通比例", async function () {
+  it("众筹成功后投资人领取代币，前 N 名享 20% 早鸟，其后普通比例", async function () {
     const { token, crowdfunding, alice, bob, carol } = await deployFixture();
 
-    const base = ethers.parseEther("1") * RATE;
-
-    await crowdfunding.connect(alice).invest({ value: ethers.parseEther("1") });
-    await crowdfunding.connect(bob).invest({ value: ethers.parseEther("1") });
+    await crowdfunding.connect(alice).invest({ value: ethers.parseEther("5") });
+    await crowdfunding.connect(bob).invest({ value: ethers.parseEther("5") });
     await crowdfunding.connect(carol).invest({ value: ethers.parseEther("1") });
+    expect(await crowdfunding.isSuccess()).to.equal(true);
+    expect(await token.balanceOf(alice.address)).to.equal(0);
 
-    expect(await token.balanceOf(alice.address)).to.equal((base * 120n) / 100n);
-    expect(await token.balanceOf(bob.address)).to.equal((base * 120n) / 100n);
-    expect(await token.balanceOf(carol.address)).to.equal(base);
+    await increaseTime(DURATION + COOLING + 1);
+
+    await crowdfunding.connect(alice).claim();
+    await crowdfunding.connect(bob).claim();
+    await crowdfunding.connect(carol).claim();
+
+    const base5 = ethers.parseEther("5") * RATE;
+    const base1 = ethers.parseEther("1") * RATE;
+    expect(await token.balanceOf(alice.address)).to.equal((base5 * 120n) / 100n);
+    expect(await token.balanceOf(bob.address)).to.equal((base5 * 120n) / 100n);
+    expect(await token.balanceOf(carol.address)).to.equal(base1);
+  });
+
+  it("冷静期结束前不能领取代币", async function () {
+    const { crowdfunding, alice } = await deployFixture();
+    await crowdfunding.connect(alice).invest({ value: ethers.parseEther("11") });
+    await increaseTime(DURATION + 1);
+    await expect(crowdfunding.connect(alice).claim()).to.be.revertedWith(
+      "cooling period not over"
+    );
+  });
+
+  it("未达标时不能领取代币", async function () {
+    const { crowdfunding, alice } = await deployFixture();
+    await crowdfunding.connect(alice).invest({ value: ethers.parseEther("4") });
+    await increaseTime(DURATION + COOLING + 1);
+    await expect(crowdfunding.connect(alice).claim()).to.be.revertedWith("goal not reached");
+  });
+
+  it("不能重复领取代币", async function () {
+    const { crowdfunding, alice } = await deployFixture();
+    await crowdfunding.connect(alice).invest({ value: ethers.parseEther("11") });
+    await increaseTime(DURATION + COOLING + 1);
+    await crowdfunding.connect(alice).claim();
+    await expect(crowdfunding.connect(alice).claim()).to.be.revertedWith("already claimed");
   });
 
   it("截止后不能再投资", async function () {
@@ -93,12 +126,21 @@ describe("Crowdfunding", function () {
     expect(await crowdfunding.contributions(alice.address)).to.equal(0);
   });
 
-  it("众筹成功后不允许退款", async function () {
+  it("成功后冷静期内可退款（保险期）", async function () {
+    const { crowdfunding, alice, bob } = await deployFixture();
+    await crowdfunding.connect(alice).invest({ value: ethers.parseEther("6") });
+    await crowdfunding.connect(bob).invest({ value: ethers.parseEther("5") });
+    await increaseTime(DURATION + 1);
+
+    await expect(crowdfunding.connect(bob).refund()).to.emit(crowdfunding, "Refunded");
+  });
+
+  it("成功且冷静期结束后不允许退款", async function () {
     const { crowdfunding, alice } = await deployFixture();
     await crowdfunding.connect(alice).invest({ value: ethers.parseEther("11") });
-    await increaseTime(DURATION + 1);
+    await increaseTime(DURATION + COOLING + 1);
     await expect(crowdfunding.connect(alice).refund()).to.be.revertedWith(
-      "goal reached, no refund"
+      "refund not available"
     );
   });
 
@@ -131,5 +173,33 @@ describe("Crowdfunding", function () {
     await increaseTime(DURATION + COOLING + 1);
     await crowdfunding.connect(owner).withdraw();
     await expect(crowdfunding.connect(owner).withdraw()).to.be.revertedWith("already withdrawn");
+  });
+
+  it("业主可提前结束众筹，结束后不能再投资", async function () {
+    const { crowdfunding, owner, alice, bob } = await deployFixture();
+    await crowdfunding.connect(alice).invest({ value: ethers.parseEther("4") });
+
+    await expect(crowdfunding.connect(owner).closeEarly()).to.emit(crowdfunding, "Closed");
+    expect(await crowdfunding.closed()).to.equal(true);
+    expect(await crowdfunding.ended()).to.equal(true);
+
+    await expect(
+      crowdfunding.connect(bob).invest({ value: ethers.parseEther("1") })
+    ).to.be.revertedWith("crowdfunding ended");
+  });
+
+  it("非业主不能提前结束众筹", async function () {
+    const { crowdfunding, alice } = await deployFixture();
+    await expect(crowdfunding.connect(alice).closeEarly()).to.be.revertedWith("not owner");
+  });
+
+  it("提前结束且未达标时投资人可退款", async function () {
+    const { crowdfunding, owner, alice } = await deployFixture();
+    await crowdfunding.connect(alice).invest({ value: ethers.parseEther("4") });
+    await crowdfunding.connect(owner).closeEarly();
+
+    await expect(crowdfunding.connect(alice).refund())
+      .to.emit(crowdfunding, "Refunded")
+      .withArgs(alice.address, ethers.parseEther("4"));
   });
 });

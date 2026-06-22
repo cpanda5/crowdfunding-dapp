@@ -12,9 +12,11 @@ const erc20Abi = [
 const shortHash = (value) =>
   value && value.length > 18 ? `${value.slice(0, 10)}...${value.slice(-6)}` : value;
 
-const readRecords = () => {
+const recordsKey = (account) => `redeem_records_${account.toLowerCase()}`;
+
+const readRecords = (account) => {
   try {
-    return JSON.parse(localStorage.getItem("redeem_records")) || [];
+    return JSON.parse(localStorage.getItem(recordsKey(account))) || [];
   } catch {
     return [];
   }
@@ -46,8 +48,6 @@ function Profile() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      setRecords(readRecords());
-
       if (!window.ethereum) {
         setLoading(false);
         return;
@@ -66,6 +66,7 @@ function Profile() {
         const balance = await provider.getBalance(selectedAccount);
 
         setAccount(selectedAccount);
+        setRecords(readRecords(selectedAccount));
         setEthBalance(`${Number(ethers.formatEther(balance)).toFixed(4)} ETH`);
 
         if (tokenAddress) {
