@@ -6,16 +6,24 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface CrowdfundingInterface extends Interface {
-    getFunction(nameOrSignature: "EARLY_BIRD_BONUS_PERCENT" | "RATE" | "contributions" | "coolingEnd" | "deadline" | "earlyBirdCount" | "getProgress" | "goal" | "invest" | "investorIndex" | "investors" | "investorsCount" | "isSuccess" | "owner" | "ownerWithdrawn" | "refund" | "token" | "totalRaised" | "withdraw"): FunctionFragment;
+    getFunction(nameOrSignature: "EARLY_BIRD_BONUS_PERCENT" | "RATE" | "claim" | "claimed" | "closeEarly" | "closed" | "closedAt" | "contributions" | "coolingEnd" | "coolingPeriod" | "deadline" | "earlyBirdCount" | "endTime" | "ended" | "getProgress" | "goal" | "invest" | "investorIndex" | "investors" | "investorsCount" | "isSuccess" | "owner" | "ownerWithdrawn" | "refund" | "token" | "tokenAmountOf" | "totalRaised" | "withdraw"): FunctionFragment;
 
-    getEvent(nameOrSignatureOrTopic: "Invested" | "Refunded" | "Withdrawn"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "Claimed" | "Closed" | "Invested" | "Refunded" | "Withdrawn"): EventFragment;
 
     encodeFunctionData(functionFragment: 'EARLY_BIRD_BONUS_PERCENT', values?: undefined): string;
 encodeFunctionData(functionFragment: 'RATE', values?: undefined): string;
+encodeFunctionData(functionFragment: 'claim', values?: undefined): string;
+encodeFunctionData(functionFragment: 'claimed', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'closeEarly', values?: undefined): string;
+encodeFunctionData(functionFragment: 'closed', values?: undefined): string;
+encodeFunctionData(functionFragment: 'closedAt', values?: undefined): string;
 encodeFunctionData(functionFragment: 'contributions', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'coolingEnd', values?: undefined): string;
+encodeFunctionData(functionFragment: 'coolingPeriod', values?: undefined): string;
 encodeFunctionData(functionFragment: 'deadline', values?: undefined): string;
 encodeFunctionData(functionFragment: 'earlyBirdCount', values?: undefined): string;
+encodeFunctionData(functionFragment: 'endTime', values?: undefined): string;
+encodeFunctionData(functionFragment: 'ended', values?: undefined): string;
 encodeFunctionData(functionFragment: 'getProgress', values?: undefined): string;
 encodeFunctionData(functionFragment: 'goal', values?: undefined): string;
 encodeFunctionData(functionFragment: 'invest', values?: undefined): string;
@@ -27,15 +35,24 @@ encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
 encodeFunctionData(functionFragment: 'ownerWithdrawn', values?: undefined): string;
 encodeFunctionData(functionFragment: 'refund', values?: undefined): string;
 encodeFunctionData(functionFragment: 'token', values?: undefined): string;
+encodeFunctionData(functionFragment: 'tokenAmountOf', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'totalRaised', values?: undefined): string;
 encodeFunctionData(functionFragment: 'withdraw', values?: undefined): string;
 
     decodeFunctionResult(functionFragment: 'EARLY_BIRD_BONUS_PERCENT', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'RATE', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'claim', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'claimed', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'closeEarly', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'closed', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'closedAt', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'contributions', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'coolingEnd', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'coolingPeriod', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'deadline', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'earlyBirdCount', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'endTime', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'ended', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getProgress', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'goal', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'invest', data: BytesLike): Result;
@@ -47,15 +64,40 @@ decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'ownerWithdrawn', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'refund', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'token', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'tokenAmountOf', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'totalRaised', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
   }
 
   
+    export namespace ClaimedEvent {
+      export type InputTuple = [investor: AddressLike, tokenAmount: BigNumberish];
+      export type OutputTuple = [investor: string, tokenAmount: bigint];
+      export interface OutputObject {investor: string, tokenAmount: bigint };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
+    export namespace ClosedEvent {
+      export type InputTuple = [closedAt: BigNumberish];
+      export type OutputTuple = [closedAt: bigint];
+      export interface OutputObject {closedAt: bigint };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
     export namespace InvestedEvent {
-      export type InputTuple = [investor: AddressLike, ethAmount: BigNumberish, tokenMinted: BigNumberish, order: BigNumberish];
-      export type OutputTuple = [investor: string, ethAmount: bigint, tokenMinted: bigint, order: bigint];
-      export interface OutputObject {investor: string, ethAmount: bigint, tokenMinted: bigint, order: bigint };
+      export type InputTuple = [investor: AddressLike, ethAmount: BigNumberish, order: BigNumberish];
+      export type OutputTuple = [investor: string, ethAmount: bigint, order: bigint];
+      export interface OutputObject {investor: string, ethAmount: bigint, order: bigint };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -138,6 +180,46 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     
 
     
+    claim: TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    claimed: TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >
+    
+
+    
+    closeEarly: TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    closed: TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >
+    
+
+    
+    closedAt: TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >
+    
+
+    
     contributions: TypedContractMethod<
       [arg0: AddressLike, ],
       [bigint],
@@ -147,6 +229,14 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
 
     
     coolingEnd: TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >
+    
+
+    
+    coolingPeriod: TypedContractMethod<
       [],
       [bigint],
       'view'
@@ -165,6 +255,22 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     earlyBirdCount: TypedContractMethod<
       [],
       [bigint],
+      'view'
+    >
+    
+
+    
+    endTime: TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >
+    
+
+    
+    ended: TypedContractMethod<
+      [],
+      [boolean],
       'view'
     >
     
@@ -258,6 +364,14 @@ decodeFunctionResult(functionFragment: 'withdraw', data: BytesLike): Result;
     
 
     
+    tokenAmountOf: TypedContractMethod<
+      [user: AddressLike, ],
+      [bigint],
+      'view'
+    >
+    
+
+    
     totalRaised: TypedContractMethod<
       [],
       [bigint],
@@ -286,12 +400,42 @@ getFunction(nameOrSignature: 'RATE'): TypedContractMethod<
       [bigint],
       'view'
     >;
+getFunction(nameOrSignature: 'claim'): TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'claimed'): TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >;
+getFunction(nameOrSignature: 'closeEarly'): TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'closed'): TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >;
+getFunction(nameOrSignature: 'closedAt'): TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >;
 getFunction(nameOrSignature: 'contributions'): TypedContractMethod<
       [arg0: AddressLike, ],
       [bigint],
       'view'
     >;
 getFunction(nameOrSignature: 'coolingEnd'): TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >;
+getFunction(nameOrSignature: 'coolingPeriod'): TypedContractMethod<
       [],
       [bigint],
       'view'
@@ -304,6 +448,16 @@ getFunction(nameOrSignature: 'deadline'): TypedContractMethod<
 getFunction(nameOrSignature: 'earlyBirdCount'): TypedContractMethod<
       [],
       [bigint],
+      'view'
+    >;
+getFunction(nameOrSignature: 'endTime'): TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >;
+getFunction(nameOrSignature: 'ended'): TypedContractMethod<
+      [],
+      [boolean],
       'view'
     >;
 getFunction(nameOrSignature: 'getProgress'): TypedContractMethod<
@@ -361,6 +515,11 @@ getFunction(nameOrSignature: 'token'): TypedContractMethod<
       [string],
       'view'
     >;
+getFunction(nameOrSignature: 'tokenAmountOf'): TypedContractMethod<
+      [user: AddressLike, ],
+      [bigint],
+      'view'
+    >;
 getFunction(nameOrSignature: 'totalRaised'): TypedContractMethod<
       [],
       [bigint],
@@ -372,13 +531,23 @@ getFunction(nameOrSignature: 'withdraw'): TypedContractMethod<
       'nonpayable'
     >;
 
-    getEvent(key: 'Invested'): TypedContractEvent<InvestedEvent.InputTuple, InvestedEvent.OutputTuple, InvestedEvent.OutputObject>;
+    getEvent(key: 'Claimed'): TypedContractEvent<ClaimedEvent.InputTuple, ClaimedEvent.OutputTuple, ClaimedEvent.OutputObject>;
+getEvent(key: 'Closed'): TypedContractEvent<ClosedEvent.InputTuple, ClosedEvent.OutputTuple, ClosedEvent.OutputObject>;
+getEvent(key: 'Invested'): TypedContractEvent<InvestedEvent.InputTuple, InvestedEvent.OutputTuple, InvestedEvent.OutputObject>;
 getEvent(key: 'Refunded'): TypedContractEvent<RefundedEvent.InputTuple, RefundedEvent.OutputTuple, RefundedEvent.OutputObject>;
 getEvent(key: 'Withdrawn'): TypedContractEvent<WithdrawnEvent.InputTuple, WithdrawnEvent.OutputTuple, WithdrawnEvent.OutputObject>;
 
     filters: {
       
-      'Invested(address,uint256,uint256,uint256)': TypedContractEvent<InvestedEvent.InputTuple, InvestedEvent.OutputTuple, InvestedEvent.OutputObject>;
+      'Claimed(address,uint256)': TypedContractEvent<ClaimedEvent.InputTuple, ClaimedEvent.OutputTuple, ClaimedEvent.OutputObject>;
+      Claimed: TypedContractEvent<ClaimedEvent.InputTuple, ClaimedEvent.OutputTuple, ClaimedEvent.OutputObject>;
+    
+
+      'Closed(uint256)': TypedContractEvent<ClosedEvent.InputTuple, ClosedEvent.OutputTuple, ClosedEvent.OutputObject>;
+      Closed: TypedContractEvent<ClosedEvent.InputTuple, ClosedEvent.OutputTuple, ClosedEvent.OutputObject>;
+    
+
+      'Invested(address,uint256,uint256)': TypedContractEvent<InvestedEvent.InputTuple, InvestedEvent.OutputTuple, InvestedEvent.OutputObject>;
       Invested: TypedContractEvent<InvestedEvent.InputTuple, InvestedEvent.OutputTuple, InvestedEvent.OutputObject>;
     
 

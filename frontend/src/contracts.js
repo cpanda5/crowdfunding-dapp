@@ -16,9 +16,15 @@ export const tokenAbi = [
 
 export const crowdfundingAbi = [
   "function invest() payable",
+  "function claim()",
   "function refund()",
   "function withdraw()",
+  "function closeEarly()",
+  "function owner() view returns (address)",
+  "function closed() view returns (bool)",
+  "function claimed(address) view returns (bool)",
   "function isSuccess() view returns (bool)",
+  "function tokenAmountOf(address) view returns (uint256)",
   "function contributions(address) view returns (uint256)",
   "function totalRaised() view returns (uint256)",
   "function goal() view returns (uint256)",
@@ -27,7 +33,9 @@ export const crowdfundingAbi = [
   "function earlyBirdCount() view returns (uint256)",
   "function investorsCount() view returns (uint256)",
   "function getProgress() view returns (uint256 raised, uint256 goalAmount, uint256 investorCount, uint256 deadlineTs, uint256 coolingEndTs, bool success)",
-  "event Invested(address indexed investor, uint256 ethAmount, uint256 tokenMinted, uint256 indexed order)",
+  "event Invested(address indexed investor, uint256 ethAmount, uint256 indexed order)",
+  "event Claimed(address indexed investor, uint256 tokenAmount)",
   "event Refunded(address indexed investor, uint256 ethAmount)",
-  "event Withdrawn(address indexed owner, uint256 ethAmount)"
+  "event Withdrawn(address indexed owner, uint256 ethAmount)",
+  "event Closed(uint256 closedAt)"
 ];

@@ -13,19 +13,24 @@ contract Crowdfunding {
     address public immutable owner;
     uint256 public immutable goal;
     uint256 public immutable deadline;
-    uint256 public immutable coolingEnd;
+    uint256 public immutable coolingPeriod;
     uint256 public immutable earlyBirdCount;
 
     uint256 public totalRaised;
     bool public ownerWithdrawn;
+    bool public closed;
+    uint256 public closedAt;
 
     address[] public investors;
     mapping(address => uint256) public contributions;
     mapping(address => uint256) public investorIndex; // 1-based; 0 = 未投资
+    mapping(address => bool) public claimed;
 
-    event Invested(address indexed investor, uint256 ethAmount, uint256 tokenMinted, uint256 indexed order);
+    event Invested(address indexed investor, uint256 ethAmount, uint256 indexed order);
+    event Claimed(address indexed investor, uint256 tokenAmount);
     event Refunded(address indexed investor, uint256 ethAmount);
     event Withdrawn(address indexed owner, uint256 ethAmount);
+    event Closed(uint256 closedAt);
 
     constructor(
         address tokenAddr,
@@ -42,12 +47,37 @@ contract Crowdfunding {
         owner = msg.sender;
         goal = _goal;
         deadline = block.timestamp + _durationSeconds;
-        coolingEnd = block.timestamp + _durationSeconds + _coolingSeconds;
+        coolingPeriod = _coolingSeconds;
         earlyBirdCount = _earlyBirdCount;
     }
 
+    function endTime() public view returns (uint256) {
+        return closed ? closedAt : deadline;
+    }
+
+    function ended() public view returns (bool) {
+        return block.timestamp >= endTime();
+    }
+
+    function coolingEnd() public view returns (uint256) {
+        return endTime() + coolingPeriod;
+    }
+
+    function isSuccess() public view returns (bool) {
+        return totalRaised >= goal;
+    }
+
+    function tokenAmountOf(address user) public view returns (uint256) {
+        uint256 base = contributions[user] * RATE;
+        uint256 idx = investorIndex[user];
+        if (idx != 0 && idx <= earlyBirdCount) {
+            base += (base * EARLY_BIRD_BONUS_PERCENT) / 100;
+        }
+        return base;
+    }
+
     function invest() external payable {
-        require(block.timestamp < deadline, "crowdfunding ended");
+        require(!ended(), "crowdfunding ended");
         require(msg.value > 0, "zero investment");
 
         if (investorIndex[msg.sender] == 0) {
@@ -58,22 +88,37 @@ contract Crowdfunding {
         contributions[msg.sender] += msg.value;
         totalRaised += msg.value;
 
-        uint256 minted = msg.value * RATE;
-        if (investorIndex[msg.sender] <= earlyBirdCount) {
-            minted += (minted * EARLY_BIRD_BONUS_PERCENT) / 100;
-        }
-        token.mint(msg.sender, minted);
-
-        emit Invested(msg.sender, msg.value, minted, investorIndex[msg.sender]);
+        emit Invested(msg.sender, msg.value, investorIndex[msg.sender]);
     }
 
-    function isSuccess() public view returns (bool) {
-        return totalRaised >= goal;
+    function closeEarly() external {
+        require(msg.sender == owner, "not owner");
+        require(!closed, "already closed");
+        require(block.timestamp < deadline, "already ended");
+
+        closed = true;
+        closedAt = block.timestamp;
+
+        emit Closed(closedAt);
+    }
+
+    function claim() external {
+        require(block.timestamp >= coolingEnd(), "cooling period not over");
+        require(isSuccess(), "goal not reached");
+        require(contributions[msg.sender] > 0, "no contribution");
+        require(!claimed[msg.sender], "already claimed");
+
+        claimed[msg.sender] = true;
+        uint256 amount = tokenAmountOf(msg.sender);
+        token.mint(msg.sender, amount);
+
+        emit Claimed(msg.sender, amount);
     }
 
     function refund() external {
-        require(block.timestamp >= deadline, "not ended yet");
-        require(!isSuccess(), "goal reached, no refund");
+        require(ended(), "not ended yet");
+        require(!claimed[msg.sender], "already claimed");
+        require(!isSuccess() || block.timestamp < coolingEnd(), "refund not available");
 
         uint256 amount = contributions[msg.sender];
         require(amount > 0, "nothing to refund");
@@ -89,7 +134,7 @@ contract Crowdfunding {
 
     function withdraw() external {
         require(msg.sender == owner, "not owner");
-        require(block.timestamp >= coolingEnd, "cooling period not over");
+        require(block.timestamp >= coolingEnd(), "cooling period not over");
         require(isSuccess(), "goal not reached");
         require(!ownerWithdrawn, "already withdrawn");
 
@@ -114,7 +159,7 @@ contract Crowdfunding {
             bool success
         )
     {
-        return (totalRaised, goal, investors.length, deadline, coolingEnd, isSuccess());
+        return (totalRaised, goal, investors.length, endTime(), coolingEnd(), isSuccess());
     }
 
     function investorsCount() external view returns (uint256) {
