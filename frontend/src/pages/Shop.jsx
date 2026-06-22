@@ -37,9 +37,11 @@ const initialProducts = [
   }
 ];
 
-const readRecords = () => {
+const recordsKey = (account) => `redeem_records_${account.toLowerCase()}`;
+
+const readRecords = (account) => {
   try {
-    return JSON.parse(localStorage.getItem("redeem_records")) || [];
+    return JSON.parse(localStorage.getItem(recordsKey(account))) || [];
   } catch {
     return [];
   }
@@ -117,8 +119,8 @@ function Shop() {
       };
 
       localStorage.setItem(
-        "redeem_records",
-        JSON.stringify([record, ...readRecords()])
+        recordsKey(account),
+        JSON.stringify([record, ...readRecords(account)])
       );
 
       setProducts((currentProducts) =>
