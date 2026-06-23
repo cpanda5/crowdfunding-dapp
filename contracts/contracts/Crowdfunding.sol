@@ -124,7 +124,6 @@ contract Crowdfunding {
         require(amount > 0, "nothing to refund");
 
         contributions[msg.sender] = 0;
-        totalRaised -= amount;
 
         (bool ok, ) = payable(msg.sender).call{value: amount}("");
         require(ok, "refund transfer failed");

@@ -22,7 +22,7 @@ function App() {
     <Layout className="app-shell">
       <Header className="top-nav">
         <Typography.Title level={4} className="brand">
-          链筹
+          ChainFund
         </Typography.Title>
         <Menu
           className="nav-menu"

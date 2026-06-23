@@ -12,10 +12,24 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <ConfigProvider
         theme={{
           token: {
-            colorPrimary: "#176b5b",
-            borderRadius: 6,
+            colorPrimary: "#3f5e50",
+            colorLink: "#3f5e50",
+            colorTextHeading: "#1a1a1a",
+            colorText: "#2a2a28",
+            colorBgContainer: "#fcfbf7",
+            colorBorder: "#e0d9c8",
+            colorBorderSecondary: "#e6e0d2",
+            borderRadius: 4,
+            borderRadiusLG: 6,
+            controlHeight: 40,
+            fontSize: 15,
             fontFamily:
-              "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+              "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, 'Noto Sans SC', sans-serif"
+          },
+          components: {
+            Layout: { headerBg: "transparent", headerPadding: 0 },
+            Card: { borderRadiusLG: 6 },
+            Button: { fontWeight: 600, primaryShadow: "none" }
           }
         }}
       >

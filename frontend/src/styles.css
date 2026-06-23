@@ -1,56 +1,93 @@
+:root {
+  --paper: #f1eee6;
+  --paper-card: #fcfbf7;
+  --header-bg: #fbf9f3;
+  --ink: #1a1a1a;
+  --ink-soft: #5c574c;
+  --hairline: #e0d9c8;
+  --grid: rgba(60, 55, 45, 0.05);
+  --forest: #3f5e50;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background: #f5f7f6;
-  color: #17211f;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 .app-shell {
   min-height: 100vh;
+  background: transparent;
 }
 
-.top-nav {
+/* ---------- 顶栏：不透明纯色，和下方网格区分 ---------- */
+.app-shell .top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 32px;
   height: auto;
-  min-height: 64px;
-  padding: 0 32px;
-  background: #ffffff;
-  border-bottom: 1px solid #dde5e1;
+  min-height: 68px;
+  padding: 0 40px;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--hairline);
+  box-shadow: 0 1px 0 #fff inset, 0 6px 18px rgba(60, 55, 45, 0.06);
 }
 
 .brand.ant-typography {
   flex: 0 0 auto;
   margin: 0;
-  color: #176b5b;
-  white-space: nowrap;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
+.brand.ant-typography::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--forest);
+  vertical-align: middle;
 }
 
 .nav-menu {
   flex: 1;
   min-width: 0;
   border-bottom: 0;
+  background: transparent;
+  font-weight: 500;
 }
 
 .nav-wallet {
   flex: 0 0 auto;
 }
 
-.chart-svg {
-  width: 100%;
-  height: auto;
-  display: block;
+.nav-wallet .ant-tag {
+  border: 1px solid var(--forest);
+  background: transparent;
+  color: var(--forest);
+  letter-spacing: 0.04em;
 }
 
+/* ---------- 内容区 ---------- */
 .page-content {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 36px 24px;
+  padding: 48px 24px 72px;
 }
 
 .page-section {
@@ -61,22 +98,100 @@ body {
   width: 100%;
 }
 
+h2.ant-typography {
+  font-weight: 700;
+}
+
+/* ---------- 卡片：发丝边框、无阴影 ---------- */
+.ant-card {
+  background: var(--paper-card);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.ant-card .ant-card-head {
+  border-bottom: 1px solid var(--hairline);
+  min-height: 52px;
+}
+
+.ant-card .ant-card-head-title {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* ---------- 按钮：实色森林绿、扁平 ---------- */
+.ant-btn-primary {
+  background: var(--forest);
+  border: 1px solid var(--forest);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.ant-btn-primary:not(:disabled):hover {
+  background: #34503f !important;
+  border-color: #34503f !important;
+}
+
+.ant-btn-default {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* ---------- 统计：编辑式微标签 ---------- */
+.ant-statistic-title {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.ant-statistic-content {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* ---------- 进度条 ---------- */
+.ant-progress-bg {
+  background: var(--forest);
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ---------- 商城商品图片动效（仅图片，不针对卡片） ---------- */
 .product-card {
   height: 100%;
+  overflow: hidden;
+}
+
+.product-card .ant-card-cover {
+  overflow: hidden;
 }
 
 .product-card .ant-card-cover img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
+  filter: grayscale(0.15);
+  transition: transform 0.6s ease, filter 0.6s ease;
 }
 
+.product-card .ant-card-cover:hover img {
+  transform: scale(1.06);
+  filter: grayscale(0);
+}
+
+/* ---------- 响应式 ---------- */
 @media (max-width: 720px) {
-  .top-nav {
+  .app-shell .top-nav {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
-    padding: 14px 18px 0;
+    padding: 14px 20px;
   }
 
   .nav-menu {
@@ -84,6 +199,6 @@ body {
   }
 
   .page-content {
-    padding: 24px 16px;
+    padding: 32px 18px 48px;
   }
 }
