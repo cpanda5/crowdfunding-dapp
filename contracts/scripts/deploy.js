@@ -1,9 +1,9 @@
 import { network } from "hardhat";
 
-const GOAL_ETH = "10";
+const GOAL_ETH = "1";
 const DURATION_SECONDS = 24 * 60 * 60;
 const EARLY_BIRD_COUNT = 3;
-const COOLING_SECONDS = 0;
+const COOLING_SECONDS = 120;
 
 async function main() {
   const { ethers } = await network.connect();
