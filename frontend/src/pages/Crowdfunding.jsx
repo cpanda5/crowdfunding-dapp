@@ -214,7 +214,7 @@ function Crowdfunding() {
 
         <Row gutter={[18, 18]}>
           <Col xs={24} md={14}>
-            <Card title="项目信息">
+            <Card title="项目信息" style={{ height: "100%" }}>
               <Typography.Paragraph>
                 本项目旨在为校园开源硬件社区筹集启动资金。投资者投入 ETH 参与众筹，
                 <b>众筹成功后</b>可按 <b>1 ETH = {RATE} PT</b> 的比例领取项目代币（PT），
@@ -291,7 +291,7 @@ function Crowdfunding() {
           </Col>
 
           <Col xs={24} md={10}>
-            <Card title="众筹进度">
+            <Card title="众筹进度" style={{ height: "100%" }}>
               <Space direction="vertical" size={14} className="full-width">
                 <Progress percent={percent} status={ended && !progress?.success ? "exception" : "active"} />
                 <Row gutter={12}>
