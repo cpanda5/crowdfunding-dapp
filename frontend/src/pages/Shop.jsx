@@ -13,7 +13,7 @@ const erc20Abi = [
   "function transfer(address to, uint256 amount) returns (bool)"
 ];
 
-const initialProducts = [
+const DEFAULT_PRODUCTS = [
   {
     id: 1,
     name: "贴纸",
@@ -30,12 +30,33 @@ const initialProducts = [
   },
   {
     id: 3,
-    name: "帆布包",
+    name: "茶包",
     price: 800,
     stock: 48,
     image: "https://images.unsplash.com/photo-1597481499750-3e6b22637e12?auto=format&fit=crop&w=800&q=80"
   }
 ];
+
+const STOCK_KEY = "shop_stock";
+
+const loadProducts = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STOCK_KEY));
+    if (!saved) return DEFAULT_PRODUCTS;
+    return DEFAULT_PRODUCTS.map((p) => {
+      const s = saved[p.id];
+      return s !== undefined ? { ...p, stock: s } : p;
+    });
+  } catch {
+    return DEFAULT_PRODUCTS;
+  }
+};
+
+const saveStock = (products) => {
+  const map = {};
+  products.forEach((p) => { map[p.id] = p.stock; });
+  localStorage.setItem(STOCK_KEY, JSON.stringify(map));
+};
 
 const recordsKey = (account) => `redeem_records_${account.toLowerCase()}`;
 
@@ -51,7 +72,7 @@ const createMockTxHash = () =>
   `mock-${Date.now().toString(16)}-${Math.random().toString(16).slice(2, 10)}`;
 
 function Shop() {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState(loadProducts);
   const [redeemingId, setRedeemingId] = useState(null);
 
   const handleRedeem = async (product) => {
@@ -123,11 +144,13 @@ function Shop() {
         JSON.stringify([record, ...readRecords(account)])
       );
 
-      setProducts((currentProducts) =>
-        currentProducts.map((item) =>
+      setProducts((currentProducts) => {
+        const updated = currentProducts.map((item) =>
           item.id === product.id ? { ...item, stock: item.stock - 1 } : item
-        )
-      );
+        );
+        saveStock(updated);
+        return updated;
+      });
 
       message.success(`${product.name} 兑换成功`);
     } catch (error) {
