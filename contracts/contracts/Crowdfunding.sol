@@ -16,20 +16,20 @@ contract Crowdfunding {
     uint256 public immutable coolingPeriod;
     uint256 public immutable earlyBirdCount;
 
-    uint256 public totalRaised;
-    bool public ownerWithdrawn;
+    uint256 public totalRaised; // 当前合约托管的 ETH（退款会减少）
+    uint256 public refundedCount; // 已退款人数
+    bool public finalized;
     bool public closed;
     uint256 public closedAt;
 
     address[] public investors;
     mapping(address => uint256) public contributions;
     mapping(address => uint256) public investorIndex; // 1-based; 0 = 未投资
-    mapping(address => bool) public claimed;
 
     event Invested(address indexed investor, uint256 ethAmount, uint256 indexed order);
-    event Claimed(address indexed investor, uint256 tokenAmount);
+    event Distributed(address indexed investor, uint256 tokenAmount);
     event Refunded(address indexed investor, uint256 ethAmount);
-    event Withdrawn(address indexed owner, uint256 ethAmount);
+    event Finalized(uint256 ethToOwner);
     event Closed(uint256 closedAt);
 
     constructor(
@@ -102,48 +102,49 @@ contract Crowdfunding {
         emit Closed(closedAt);
     }
 
-    function claim() external {
+    // 业主结算：众筹成功且冷静期结束后，自动给所有投资人按比例铸币（含早鸟），并把募集款转给业主
+    function finalize() external {
+        require(msg.sender == owner, "not owner");
         require(block.timestamp >= coolingEnd(), "cooling period not over");
         require(isSuccess(), "goal not reached");
-        require(contributions[msg.sender] > 0, "no contribution");
-        require(!claimed[msg.sender], "already claimed");
+        require(!finalized, "already finalized");
 
-        claimed[msg.sender] = true;
-        uint256 amount = tokenAmountOf(msg.sender);
-        token.mint(msg.sender, amount);
+        finalized = true;
 
-        emit Claimed(msg.sender, amount);
+        uint256 len = investors.length;
+        for (uint256 i = 0; i < len; i++) {
+            address investor = investors[i];
+            uint256 amount = tokenAmountOf(investor);
+            if (amount > 0) {
+                token.mint(investor, amount);
+                emit Distributed(investor, amount);
+            }
+        }
+
+        uint256 bal = address(this).balance;
+        (bool ok, ) = payable(owner).call{value: bal}("");
+        require(ok, "withdraw transfer failed");
+
+        emit Finalized(bal);
     }
 
+    // 退款（pull）：众筹失败、或成功后的冷静期内（保险期），投资人手动取回 ETH
     function refund() external {
         require(ended(), "not ended yet");
-        require(!claimed[msg.sender], "already claimed");
+        require(!finalized, "already finalized");
         require(!isSuccess() || block.timestamp < coolingEnd(), "refund not available");
 
         uint256 amount = contributions[msg.sender];
         require(amount > 0, "nothing to refund");
 
         contributions[msg.sender] = 0;
+        totalRaised -= amount;
+        refundedCount += 1;
 
         (bool ok, ) = payable(msg.sender).call{value: amount}("");
         require(ok, "refund transfer failed");
 
         emit Refunded(msg.sender, amount);
-    }
-
-    function withdraw() external {
-        require(msg.sender == owner, "not owner");
-        require(block.timestamp >= coolingEnd(), "cooling period not over");
-        require(isSuccess(), "goal not reached");
-        require(!ownerWithdrawn, "already withdrawn");
-
-        ownerWithdrawn = true;
-        uint256 amount = address(this).balance;
-
-        (bool ok, ) = payable(owner).call{value: amount}("");
-        require(ok, "withdraw transfer failed");
-
-        emit Withdrawn(owner, amount);
     }
 
     function getProgress()

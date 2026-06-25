@@ -38,7 +38,7 @@ function Crowdfunding() {
 
   const [progress, setProgress] = useState(null);
   const [myContribution, setMyContribution] = useState("0");
-  const [myClaimed, setMyClaimed] = useState(false);
+  const [finalized, setFinalized] = useState(false);
   const [contractOwner, setContractOwner] = useState("");
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
   const [amount, setAmount] = useState("");
@@ -59,23 +59,25 @@ function Crowdfunding() {
     try {
       const [raised, goal, count, deadline, coolingEnd, success] =
         await contract.getProgress();
+      const [ownerAddr, finalizedFlag, refunded] = await Promise.all([
+        contract.owner(),
+        contract.finalized(),
+        contract.refundedCount()
+      ]);
       setProgress({
         raised: Number(ethers.formatEther(raised)),
         goal: Number(ethers.formatEther(goal)),
         count: Number(count),
+        refunded: Number(refunded),
         deadline: Number(deadline),
         coolingEnd: Number(coolingEnd),
         success
       });
-      const ownerAddr = await contract.owner();
       setContractOwner(ownerAddr);
+      setFinalized(finalizedFlag);
       if (account) {
-        const [contrib, claimedFlag] = await Promise.all([
-          contract.contributions(account),
-          contract.claimed(account)
-        ]);
+        const contrib = await contract.contributions(account);
         setMyContribution(ethers.formatEther(contrib));
-        setMyClaimed(claimedFlag);
       }
     } catch (error) {
       console.error(error);
@@ -121,9 +123,11 @@ function Crowdfunding() {
     };
     contract.on("Invested", handler);
     contract.on("Closed", handler);
+    contract.on("Finalized", handler);
     return () => {
       contract.off("Invested", handler);
       contract.off("Closed", handler);
+      contract.off("Finalized", handler);
     };
   }, [getReadContract, loadProgress, loadChart]);
 
@@ -191,14 +195,14 @@ function Crowdfunding() {
     );
   }
 
-  const canClaim =
-    progress && ended && coolingOver && progress.success && Number(myContribution) > 0 && !myClaimed;
   const canRefund =
     progress &&
     ended &&
+    !finalized &&
     Number(myContribution) > 0 &&
-    !myClaimed &&
     (!progress.success || !coolingOver);
+  const canFinalize =
+    progress && ended && coolingOver && progress.success && !finalized;
   const isOwner =
     account && contractOwner && account.toLowerCase() === contractOwner.toLowerCase();
 
@@ -217,9 +221,9 @@ function Crowdfunding() {
             <Card title="项目信息" style={{ height: "100%" }}>
               <Typography.Paragraph>
                 本项目旨在为校园开源硬件社区筹集启动资金。投资者投入 ETH 参与众筹，
-                <b>众筹成功后</b>可按 <b>1 ETH = {RATE} PT</b> 的比例领取项目代币（PT），
-                代币可在项目商城兑换纪念商品。前 3 名投资者享 <b>20% 早鸟奖励</b>；
-                众筹失败时投资人可全额退款。
+                <b>众筹成功并经冷静期后，由发起人结算，代币自动发放</b>，按
+                <b> 1 ETH = {RATE} PT</b> 的比例到账（PT），代币可在项目商城兑换纪念商品。
+                前 3 名投资者享 <b>20% 早鸟奖励</b>；众筹失败或冷静期内投资人可全额退款。
               </Typography.Paragraph>
 
               <Space.Compact style={{ width: "100%" }}>
@@ -241,48 +245,48 @@ function Crowdfunding() {
               </Space.Compact>
               {amount && Number(amount) > 0 && (
                 <Typography.Text type="secondary">
-                  众筹成功后约可领取 {(Number(amount) * RATE).toLocaleString()} PT（早鸟另加 20%）
+                  众筹成功后约可获得 {(Number(amount) * RATE).toLocaleString()} PT（早鸟另加 20%）
                 </Typography.Text>
               )}
 
-              {isOwner && !ended && (
-                <div style={{ marginTop: 16 }}>
-                  <Button
-                    danger
-                    loading={busy === "close"}
-                    onClick={() => sendTx("close", (c) => c.closeEarly())}
-                  >
-                    提前结束众筹（发起人）
-                  </Button>
-                </div>
+              {isOwner && (canFinalize || !ended) && (
+                <Space style={{ marginTop: 16 }}>
+                  {!ended && (
+                    <Button
+                      danger
+                      loading={busy === "close"}
+                      onClick={() => sendTx("close", (c) => c.closeEarly())}
+                    >
+                      提前结束众筹（发起人）
+                    </Button>
+                  )}
+                  {canFinalize && (
+                    <Button
+                      type="primary"
+                      loading={busy === "finalize"}
+                      onClick={() => sendTx("finalize", (c) => c.finalize())}
+                    >
+                      结算并发放代币（发起人）
+                    </Button>
+                  )}
+                </Space>
               )}
 
               {Number(myContribution) > 0 && (
                 <div style={{ marginTop: 16 }}>
                   <Typography.Text>
                     我已投资 <b>{myContribution} ETH</b>
-                    {myClaimed && "（已领取代币）"}
+                    {finalized && "（代币已自动发放）"}
                   </Typography.Text>
-                  {(canClaim || canRefund) && (
+                  {canRefund && (
                     <Space style={{ marginTop: 10 }}>
-                      {canClaim && (
-                        <Button
-                          type="primary"
-                          loading={busy === "claim"}
-                          onClick={() => sendTx("claim", (c) => c.claim())}
-                        >
-                          领取代币
-                        </Button>
-                      )}
-                      {canRefund && (
-                        <Button
-                          danger
-                          loading={busy === "refund"}
-                          onClick={() => sendTx("refund", (c) => c.refund())}
-                        >
-                          退款
-                        </Button>
-                      )}
+                      <Button
+                        danger
+                        loading={busy === "refund"}
+                        onClick={() => sendTx("refund", (c) => c.refund())}
+                      >
+                        退款
+                      </Button>
                     </Space>
                   )}
                 </div>
@@ -304,7 +308,15 @@ function Crowdfunding() {
                     />
                   </Col>
                   <Col span={12}>
-                    <Statistic title="参与人数" value={progress ? progress.count : 0} />
+                    <Statistic
+                      title="参与人数"
+                      value={progress ? progress.count : 0}
+                      suffix={
+                        progress && progress.refunded > 0
+                          ? `（${progress.refunded}人已退款）`
+                          : undefined
+                      }
+                    />
                   </Col>
                 </Row>
                 <Statistic title="剩余时间" value={formatRemaining(remaining)} />
